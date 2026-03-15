@@ -1,132 +1,187 @@
-"use client";
+"use client"
 
-import { useState } from "react";
+import { useState, useEffect } from "react";
 import { UploadSection } from "./UploadSection";
 import { PackageSelector } from "./PackageSelector";
 import { CodePreview } from "./CodePreview";
-import { Banana, Sparkles, Wand2, Info } from "lucide-react";
+import { Brush, Sparkles, Wand2, Layout, Github } from "lucide-react";
 import { motion } from "framer-motion";
+import { generateCode } from "@/app/actions";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
+import { Badge } from "@/components/ui/badge";
+import { Separator } from "@/components/ui/separator";
+import { cn } from "@/lib/utils";
+import { ThemeToggle } from "./ThemeToggle";
+import { useAction } from "next-safe-action/hooks";
+import { InlineError } from "./InlineError";
 
 export default function Dashboard() {
   const [image, setImage] = useState<string | null>(null);
   const [packages, setPackages] = useState<string[]>(["tailwind", "lucide"]);
   const [code, setCode] = useState<string | null>(null);
-  const [isLoading, setIsLoading] = useState(false);
-  const [error, setError] = useState<string | null>(null);
 
-  const handleGenerate = async () => {
-    if (!image) return;
+  const { execute, status, result } = useAction(generateCode, {
+    onSuccess: ({ data }) => {
+      if (data?.success && data.data) {
+        setCode(data.data.code);
+      }
+    },
+  });
 
-    setIsLoading(true);
-    setError(null);
+  const isPending = status === "executing";
+  const error = result.serverError || result.validationErrors?._errors?.[0];
 
-    try {
-      const response = await fetch("/api/generate", {
-        method: "POST",
-        headers: { "Content-Type": "application/json" },
-        body: JSON.stringify({ image, packages }),
-      });
-
-      const data = await response.json();
-      if (data.error) throw new Error(data.error);
-      
-      setCode(data.code);
-    } catch (err: any) {
-      setError(err.message || "Failed to generate code. Please check your OpenAI API key.");
-    } finally {
-      setIsLoading(false);
+  const handleGenerate = () => {
+    if (image) {
+      execute({ image, packages });
     }
   };
 
   return (
-    <div className="min-h-screen bg-background text-foreground selection:bg-primary/30 selection:text-primary-foreground p-6 md:p-12">
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 selection:text-primary-foreground p-4 md:p-8 lg:p-12">
       {/* Background blobs */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[40%] h-[40%] bg-primary/20 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[40%] h-[40%] bg-purple-500/10 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-500/5 blur-[120px] rounded-full" />
       </div>
 
-      <header className="max-w-7xl mx-auto flex items-center justify-between mb-12">
-        <div className="flex items-center gap-2 group">
-          <div className="w-10 h-10 bg-yellow-400 rounded-xl flex items-center justify-center neo-banana-glow group-hover:rotate-12 transition-transform shadow-lg shadow-yellow-400/20">
-            <Banana className="w-6 h-6 text-slate-900 fill-slate-900" />
-          </div>
-          <h1 className="text-2xl font-bold tracking-tight">
-            Neo<span className="text-yellow-400">Banana</span>
+      <motion.header 
+        initial={{ opacity: 0, y: -20 }}
+        animate={{ opacity: 1, y: 0 }}
+        className="max-w-7xl mx-auto flex items-center justify-between mb-8 md:mb-16"
+      >
+        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
+          <motion.div 
+            whileHover={{ scale: 1.1, rotate: 5 }}
+            whileTap={{ scale: 0.9 }}
+            className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20"
+          >
+            <Brush className="w-7 h-7 text-white" />
+          </motion.div>
+          <h1 className="text-2xl md:text-3xl font-black tracking-tighter">
+            Vision<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">Sketch</span>
           </h1>
         </div>
-        <div className="hidden md:flex items-center gap-6 text-sm font-medium text-muted-foreground">
-          <a href="#" className="hover:text-primary transition-colors">Documentation</a>
-          <a href="#" className="hover:text-primary transition-colors">Templates</a>
-          <button className="px-4 py-2 glass rounded-full hover:bg-white/10 transition-colors border-border/50">
+        
+        <div className="flex items-center gap-2 md:gap-4">
+          <Button variant="ghost" size="icon" className="rounded-full">
+            <Github className="w-5 h-5" />
+          </Button>
+          <ThemeToggle />
+          <Button className="rounded-full px-6 hidden md:flex">
             Sign In
-          </button>
+          </Button>
         </div>
-      </header>
+      </motion.header>
 
       <main className="max-w-7xl mx-auto">
-        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 items-start">
-          
+        <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
+
           {/* Left Panel: Configuration */}
-          <div className="lg:col-span-5 space-y-8">
-            <motion.div 
-              initial={{ opacity: 0, x: -20 }}
-              animate={{ opacity: 1, x: 0 }}
-              className="space-y-2"
+          <div className="lg:col-span-12 xl:col-span-5 space-y-8 lg:sticky lg:top-8">
+            <motion.div
+              initial={{ opacity: 0, y: 20 }}
+              animate={{ opacity: 1, y: 0 }}
+              className="space-y-6"
             >
-              <h2 className="text-4xl md:text-5xl font-extrabold tracking-tight leading-tight">
-                Turn your <span className="gradient-text">sketches</span> into code.
+              <div className="flex flex-wrap gap-2">
+                <Badge variant="secondary" className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none">
+                  AI-Powered Generation
+                </Badge>
+                <Badge variant="outline" className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-purple-500/30 text-purple-600 dark:text-purple-400">
+                  Next.js 16 + Tailwind 4
+                </Badge>
+              </div>
+              <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1] text-balance">
+                Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Sketch</span>, our <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Reality.</span>
               </h2>
-              <p className="text-lg text-muted-foreground">
-                Upload a hand-drawn sketch or a wireframe and let Neo Banana build your React components in seconds.
+              <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
+                The most advanced AI bridge for designers and developers. Transform hand-drawn ideas into production-ready React components.
               </p>
             </motion.div>
 
-            <div className="glass rounded-3xl p-6 md:p-8 space-y-8 border border-border/50 shadow-2xl">
-              <UploadSection onUpload={setImage} />
-              
-              <PackageSelector 
-                selectedPackages={packages} 
-                onChange={setPackages} 
-              />
+            <motion.div
+              initial={{ opacity: 0, scale: 0.95 }}
+              animate={{ opacity: 1, scale: 1 }}
+              transition={{ delay: 0.2 }}
+            >
+              <Card className="border-border/40 bg-card/50 backdrop-blur-xl shadow-2xl rounded-[2.5rem] overflow-hidden">
+                <CardHeader className="pb-4">
+                  <CardTitle className="flex items-center gap-2 text-xl">
+                    <Layout className="w-5 h-5 text-blue-500" />
+                    Studio Configuration
+                  </CardTitle>
+                  <CardDescription>Customize your output package ecosystem</CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-8">
+                  <UploadSection onUpload={setImage} />
 
-              <button
-                disabled={!image || isLoading}
-                onClick={handleGenerate}
-                className={cn(
-                  "w-full py-4 rounded-2xl flex items-center justify-center gap-2 font-bold text-lg transition-all duration-300",
-                  !image || isLoading 
-                    ? "bg-secondary text-muted-foreground cursor-not-allowed" 
-                    : "bg-primary text-primary-foreground hover:scale-[1.02] active:scale-[0.98] shadow-lg shadow-primary/25"
-                )}
-              >
-                {isLoading ? (
-                  <Sparkles className="w-5 h-5 animate-spin" />
-                ) : (
-                  <Wand2 className="w-5 h-5" />
-                )}
-                {isLoading ? "Analyzing..." : "Generate Code"}
-              </button>
+                  <Separator className="opacity-50" />
 
-              {error && (
-                <div className="p-4 bg-destructive/10 border border-destructive/20 rounded-xl flex gap-3 text-destructive text-sm">
-                  <Info className="w-5 h-5 shrink-0" />
-                  <p>{error}</p>
-                </div>
-              )}
-            </div>
+                  <PackageSelector
+                    selectedPackages={packages}
+                    onChange={setPackages}
+                  />
+
+                  <div className="w-full space-y-4">
+                    <input type="hidden" name="image" value={image || ""} />
+                    <input type="hidden" name="packages" value={JSON.stringify(packages)} />
+
+                    <Button
+                      type="button"
+                      onClick={handleGenerate}
+                      disabled={!image || isPending}
+                      size="lg"
+                      className={cn(
+                        "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
+                        image && !isPending && "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                      )}
+                    >
+                      {isPending ? (
+                        <Sparkles className="w-6 h-6 animate-spin" />
+                      ) : (
+                        <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                      )}
+                      {isPending ? "Visioning..." : "Generate Architecture"}
+
+                      {/* Subtle shine effect */}
+                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                    </Button>
+                  </div>
+
+                  <InlineError message={error} />
+                </CardContent>
+              </Card>
+            </motion.div>
           </div>
 
           {/* Right Panel: Output */}
-          <div className="lg:col-span-7 h-[600px] lg:h-[800px]">
-            <CodePreview code={code} isLoading={isLoading} />
-          </div>
+          <motion.div 
+            initial={{ opacity: 0, x: 20 }}
+            animate={{ opacity: 1, x: 0 }}
+            transition={{ delay: 0.3 }}
+            className="lg:col-span-12 xl:col-span-7 h-[600px] md:h-[700px] xl:h-[850px] xl:sticky xl:top-8"
+          >
+            <CodePreview code={code} isLoading={isPending} />
+          </motion.div>
 
         </div>
       </main>
 
-      <footer className="max-w-7xl mx-auto mt-20 pt-8 border-t border-border/30 text-center text-sm text-muted-foreground">
-        <p>© 2026 Neo Banana AI. Built for designers and developers.</p>
+      <footer className="max-w-7xl mx-auto mt-24 pb-12 pt-8 border-t border-border/20">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
+          <div className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-50 hover:opacity-100">
+            <Brush className="w-5 h-5" />
+            <span className="font-bold tracking-tighter">VisionSketch AI</span>
+          </div>
+          <div className="flex gap-4">
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Safe Actions API</Badge>
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Magic Hour ML</Badge>
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Edge Caching</Badge>
+          </div>
+          <p className="text-xs text-muted-foreground font-medium">© 2026 VisionSketch. All rights reserved.</p>
+        </div>
       </footer>
     </div>
   );

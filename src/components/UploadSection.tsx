@@ -1,100 +1,85 @@
 "use client";
 
-import { useState, useRef } from "react";
-import { Upload, X, ImageIcon } from "lucide-react";
-import { motion, AnimatePresence } from "framer-motion";
+import { useState } from "react";
+import { FilePond, registerPlugin } from "react-filepond";
+import FilePondPluginImagePreview from "filepond-plugin-image-preview";
+import FilePondPluginImageCrop from "filepond-plugin-image-crop";
+import FilePondPluginImageResize from "filepond-plugin-image-resize";
+import FilePondPluginImageTransform from "filepond-plugin-image-transform";
 import { cn } from "@/lib/utils";
+
+// Register the plugins
+registerPlugin(
+  FilePondPluginImagePreview,
+  FilePondPluginImageCrop,
+  FilePondPluginImageResize,
+  FilePondPluginImageTransform
+);
 
 interface UploadSectionProps {
   onUpload: (base64: string) => void;
 }
 
 export function UploadSection({ onUpload }: UploadSectionProps) {
-  const [preview, setPreview] = useState<string | null>(null);
-  const [isDragging, setIsDragging] = useState(false);
-  const fileInputRef = useRef<HTMLInputElement>(null);
-
-  const handleFile = (file: File) => {
-    if (file && file.type.startsWith("image/")) {
-      const reader = new FileReader();
-      reader.onloadend = () => {
-        const base64 = reader.result as string;
-        setPreview(base64);
-        onUpload(base64);
-      };
-      reader.readAsDataURL(file);
-    }
-  };
-
-  const onDrop = (e: React.DragEvent) => {
-    e.preventDefault();
-    setIsDragging(false);
-    const file = e.dataTransfer.files[0];
-    handleFile(file);
-  };
+  const [files, setFiles] = useState<any[]>([]);
 
   return (
     <div className="space-y-4">
-      <div
-        onDragOver={(e) => { e.preventDefault(); setIsDragging(true); }}
-        onDragLeave={() => setIsDragging(false)}
-        onDrop={onDrop}
-        onClick={() => fileInputRef.current?.click()}
+      <FilePond
+        files={files}
+        onupdatefiles={setFiles}
+        allowMultiple={false}
+        maxFiles={1}
+        name="files"
+        labelIdle='Drag & Drop your sketch or <span class="filepond--label-action">Browse</span>'
+        imagePreviewHeight={170}
+        imageCropAspectRatio="1:1"
+        imageResizeTargetWidth={200}
+        imageResizeTargetHeight={200}
+        stylePanelLayout="compact"
+        styleLoadIndicatorPosition="center bottom"
+        styleProgressIndicatorPosition="right bottom"
+        styleButtonRemoveItemPosition="left bottom"
+        styleButtonProcessItemPosition="right bottom"
         className={cn(
-          "relative group cursor-pointer aspect-video rounded-2xl border-2 border-dashed transition-all duration-300 flex flex-col items-center justify-center overflow-hidden",
-          isDragging ? "border-primary bg-primary/5" : "border-border hover:border-primary/50 bg-secondary/30",
-          preview && "border-none"
+          "vision-sketch-pond",
+          "dark:filepond--root"
         )}
-      >
-        <input
-          type="file"
-          className="hidden"
-          ref={fileInputRef}
-          onChange={(e) => e.target.files?.[0] && handleFile(e.target.files[0])}
-          accept="image/*"
-        />
-
-        <AnimatePresence mode="wait">
-          {preview ? (
-            <motion.div
-              initial={{ opacity: 0 }}
-              animate={{ opacity: 1 }}
-              exit={{ opacity: 0 }}
-              className="absolute inset-0 w-full h-full"
-            >
-              <img src={preview} alt="Sketch preview" className="w-full h-full object-cover" />
-              <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
-                <p className="text-white font-medium flex items-center gap-2">
-                  <Upload className="w-5 h-5" /> Change Image
-                </p>
-              </div>
-              <button
-                onClick={(e) => {
-                  e.stopPropagation();
-                  setPreview(null);
-                }}
-                className="absolute top-3 right-3 p-2 bg-black/50 hover:bg-black/70 rounded-full text-white backdrop-blur-md transition-colors"
-              >
-                <X className="w-4 h-4" />
-              </button>
-            </motion.div>
-          ) : (
-            <motion.div
-              initial={{ y: 10, opacity: 0 }}
-              animate={{ y: 0, opacity: 1 }}
-              className="text-center p-6"
-            >
-              <div className="w-16 h-16 bg-primary/10 rounded-2xl flex items-center justify-center mx-auto mb-4 group-hover:scale-110 transition-transform">
-                <ImageIcon className="w-8 h-8 text-primary" />
-              </div>
-              <h3 className="text-lg font-semibold mb-1">Upload your sketch</h3>
-              <p className="text-sm text-muted-foreground">
-                Drag and drop or click to browse
-              </p>
-            </motion.div>
-          )}
-        </AnimatePresence>
-      </div>
+        onpreparefile={(file, output) => {
+          const reader = new FileReader();
+          reader.onloadend = () => {
+            const base64 = reader.result as string;
+            onUpload(base64);
+          };
+          reader.readAsDataURL(output);
+        }}
+      />
+      
+      <style jsx global>{`
+        .filepond--root {
+          margin-bottom: 0;
+          font-family: inherit;
+        }
+        .filepond--panel-root {
+          background-color: var(--secondary);
+          border-radius: 1.5rem;
+          border: 2px dashed var(--border);
+        }
+        .filepond--drop-label {
+          color: var(--muted-foreground);
+        }
+        .filepond--label-action {
+          text-decoration-color: var(--primary);
+          color: var(--primary);
+          font-weight: 600;
+        }
+        .dark .filepond--panel-root {
+          background-color: rgba(255, 255, 255, 0.05);
+        }
+        .filepond--item-panel {
+           background-color: var(--primary);
+        }
+      `}</style>
     </div>
   );
 }
