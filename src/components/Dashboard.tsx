@@ -1,10 +1,10 @@
-"use client"
+"use client";
 
-import { useState, useEffect } from "react";
+import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { UploadSection } from "./UploadSection";
 import { PackageSelector } from "./PackageSelector";
-import { CodePreview } from "./CodePreview";
-import { Brush, Sparkles, Wand2, Layout, Github } from "lucide-react";
+import { CodePreviewSkeleton } from "./CodePreviewSkeleton";
+import { Brush, Sparkles, Wand2, Layout, Github, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { generateCode } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -16,10 +16,19 @@ import { ThemeToggle } from "./ThemeToggle";
 import { useAction } from "next-safe-action/hooks";
 import { InlineError } from "./InlineError";
 
+const CodePreview = lazy(() => import("./CodePreview"));
+
 export default function Dashboard() {
   const [image, setImage] = useState<string | null>(null);
   const [packages, setPackages] = useState<string[]>(["tailwind", "lucide"]);
   const [code, setCode] = useState<string | null>(null);
+
+  const [isOptimisticGenerating, setOptimisticGenerating] = useOptimistic(
+    false,
+    (_current, next: boolean) => next
+  );
+  const [, startTransition] = useTransition();
+  const prevStatusRef = useRef<string | undefined>(undefined);
 
   const { execute, status, result } = useAction(generateCode, {
     onSuccess: ({ data }) => {
@@ -29,13 +38,24 @@ export default function Dashboard() {
     },
   });
 
-  const isPending = status === "executing";
-  const error = result.serverError || result.validationErrors?._errors?.[0];
+  useEffect(() => {
+    if (prevStatusRef.current === "executing" && status !== "executing") {
+      setOptimisticGenerating(false);
+    }
+    prevStatusRef.current = status;
+  }, [status, setOptimisticGenerating]);
+
+  const isActionPending = status === "executing";
+  const isBusy = isActionPending || isOptimisticGenerating;
+  const error =
+    isBusy ? undefined : result.serverError || result.validationErrors?._errors?.[0];
 
   const handleGenerate = () => {
-    if (image) {
+    if (!image) return;
+    startTransition(() => {
+      setOptimisticGenerating(true);
       execute({ image, packages });
-    }
+    });
   };
 
   return (
@@ -76,6 +96,10 @@ export default function Dashboard() {
       </motion.header>
 
       <main className="max-w-7xl mx-auto">
+        <div className="sr-only" aria-live="polite" aria-atomic="true">
+          {isBusy && "Generating code from your sketch. Please wait."}
+        </div>
+
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
 
           {/* Left Panel: Configuration */}
@@ -85,7 +109,16 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-              <div className="flex flex-wrap gap-2">
+                  <div className="flex flex-wrap gap-2">
+                {isOptimisticGenerating && !isActionPending && (
+                  <Badge
+                    variant="outline"
+                    className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-amber-700 dark:text-amber-400 animate-pulse"
+                  >
+                    <Zap className="w-3 h-3 shrink-0" aria-hidden />
+                    Queued…
+                  </Badge>
+                )}
                 <Badge variant="secondary" className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none">
                   AI-Powered Generation
                 </Badge>
@@ -131,19 +164,24 @@ export default function Dashboard() {
                     <Button
                       type="button"
                       onClick={handleGenerate}
-                      disabled={!image || isPending}
+                      disabled={!image || isBusy}
                       size="lg"
+                      aria-busy={isBusy}
                       className={cn(
                         "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
-                        image && !isPending && "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                        image && !isBusy && "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
                       )}
                     >
-                      {isPending ? (
+                      {isBusy ? (
                         <Sparkles className="w-6 h-6 animate-spin" />
                       ) : (
                         <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
                       )}
-                      {isPending ? "Visioning..." : "Generate Architecture"}
+                      {isBusy
+                        ? isOptimisticGenerating && !isActionPending
+                          ? "Starting…"
+                          : "Generating…"
+                        : "Generate UI code"}
 
                       {/* Subtle shine effect */}
                       <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
@@ -163,7 +201,9 @@ export default function Dashboard() {
             transition={{ delay: 0.3 }}
             className="lg:col-span-12 xl:col-span-7 h-[600px] md:h-[700px] xl:h-[850px] xl:sticky xl:top-8"
           >
-            <CodePreview code={code} isLoading={isPending} />
+            <Suspense fallback={<CodePreviewSkeleton />}>
+              <CodePreview code={code} isLoading={isBusy} />
+            </Suspense>
           </motion.div>
 
         </div>

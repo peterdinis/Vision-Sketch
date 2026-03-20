@@ -1,5 +1,11 @@
-import Dashboard from "@/components/Dashboard";
+import { Suspense } from "react";
+import { AppHome } from "@/components/AppHome";
+import { HomePageSkeleton } from "@/components/HomePageSkeleton";
 
 export default function Home() {
-  return <Dashboard />;
+  return (
+    <Suspense fallback={<HomePageSkeleton />}>
+      <AppHome />
+    </Suspense>
+  );
 }
