@@ -9,7 +9,7 @@ import { requireOpenAiApiKey } from "@/lib/env";
 import { imageDataUrlSchema } from "@/lib/upload-rules";
 
 const magicHour = new MagicHour({
-  token: process.env.MAGIC_HOUR_API_KEY || "dummy",
+  token: process.env.MAGIC_HOUR_API_KEY
 });
 
 const getGeneratedCode = unstable_cache(

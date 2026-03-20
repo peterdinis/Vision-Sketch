@@ -2,13 +2,14 @@
 
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Copy, Check, Play, Code as CodeIcon } from "lucide-react";
+import { Copy, Check, Play, Code as CodeIcon, Loader2 } from "lucide-react";
 import { useMemo, useState } from "react";
 import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CodePreviewProps {
   code: string | null;
+  /** True while the server action is running (includes optimistic pending). */
   isLoading: boolean;
 }
 
@@ -195,7 +196,7 @@ export function CodePreview({ code, isLoading }: CodePreviewProps) {
     }
   };
 
-  if (isLoading) {
+  if (!code && isLoading) {
     return (
       <div className="h-full min-h-[400px] flex flex-col items-center justify-center glass rounded-2xl p-8 text-center">
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
@@ -217,7 +218,7 @@ export function CodePreview({ code, isLoading }: CodePreviewProps) {
   }
 
   return (
-    <div className="h-full flex flex-col glass rounded-2xl overflow-hidden border border-border/50">
+    <div className="relative h-full flex flex-col glass rounded-2xl overflow-hidden border border-border/50">
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-secondary/30">
         <div className="flex bg-background/50 p-1 rounded-lg border border-border/50">
           <button
@@ -289,6 +290,25 @@ export function CodePreview({ code, isLoading }: CodePreviewProps) {
           )}
         </AnimatePresence>
       </div>
+
+      {isLoading && (
+        <div
+          className="absolute inset-0 z-10 flex flex-col items-center justify-center gap-3 bg-background/70 backdrop-blur-sm text-center px-6"
+          role="status"
+          aria-live="polite"
+          aria-label="Regenerating code"
+        >
+          <Loader2 className="w-10 h-10 text-primary animate-spin" />
+          <div>
+            <p className="font-semibold text-foreground">Regenerating…</p>
+            <p className="text-sm text-muted-foreground mt-1 max-w-xs">
+              Previous code stays visible until the new result arrives (optimistic UI).
+            </p>
+          </div>
+        </div>
+      )}
     </div>
   );
 }
+
+export default CodePreview;
