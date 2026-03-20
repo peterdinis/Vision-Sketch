@@ -52,7 +52,8 @@ const getGeneratedCode = unstable_cache(
       4. Make the component look polished, premium, and as close to the sketch as possible.
       5. Include any necessary state management using React hooks.
       6. Provide ONLY the code for the main component. Do not include imports like 'import React from "react"' unless necessary for hooks.
-      7. Return the response as a JSON object with a 'code' field.
+      7. Export the UI as a single default export with a PascalCase name, e.g. export default function SketchView() { ... } (not anonymous default). This enables live preview.
+      8. Return the response as a JSON object with a 'code' field.
     `;
 
     const response = await openai.chat.completions.create({
