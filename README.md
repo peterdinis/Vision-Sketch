@@ -1,5 +1,13 @@
 This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
 
+## Environment
+
+1. Copy `.env.example` to `.env.local`.
+2. Set **`OPENAI_API_KEY`** (required) from [OpenAI API keys](https://platform.openai.com/api-keys).
+3. Optionally set **`MAGIC_HOUR_API_KEY`** for sketch upscaling before vision.
+
+Variable names must match `.env.example` — the server reads `OPENAI_API_KEY` for the OpenAI client.
+
 ## Getting Started
 
 First, run the development server:

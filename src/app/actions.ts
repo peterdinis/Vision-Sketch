@@ -5,10 +5,8 @@ import { unstable_cache } from "next/cache";
 import { actionClient } from "@/lib/safe-action";
 import { z } from "zod";
 import MagicHour from "magic-hour";
-
-const openai = new OpenAI({
-  apiKey: process.env.OPENAI_API_KEY,
-});
+import { requireOpenAiApiKey } from "@/lib/env";
+import { imageDataUrlSchema } from "@/lib/upload-rules";
 
 const magicHour = new MagicHour({
   token: process.env.MAGIC_HOUR_API_KEY || "dummy",
@@ -83,6 +81,10 @@ Implement **mobile-first** responsive behavior for the whole component:
 The sketch image is attached; follow it as the single source of truth for structure and content.
     `.trim();
 
+    const openai = new OpenAI({
+      apiKey: process.env.OPENAI_API_KEY!.trim(),
+    });
+
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
       temperature: 0.35,
@@ -115,7 +117,7 @@ The sketch image is attached; follow it as the single source of truth for struct
 );
 
 const schema = z.object({
-  image: z.string().min(1, "Image is required"),
+  image: imageDataUrlSchema,
   packages: z.array(z.string()).optional(),
 });
 
@@ -123,6 +125,7 @@ export const generateCode = actionClient
   .schema(schema)
   .action(async ({ parsedInput: { image, packages } }) => {
     try {
+      requireOpenAiApiKey();
       const result = await getGeneratedCode(image, packages || []);
       return { success: true, data: result };
     } catch (error: any) {
