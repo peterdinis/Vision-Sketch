@@ -1,7 +1,7 @@
 "use server";
 
 import { OpenAI } from "openai";
-import { revalidatePath, unstable_cache } from "next/cache";
+import { unstable_cache } from "next/cache";
 import { actionClient } from "@/lib/safe-action";
 import { z } from "zod";
 import MagicHour from "magic-hour";
@@ -38,26 +38,54 @@ const getGeneratedCode = unstable_cache(
     }
 
     const packageContext = packages && packages.length > 0
-      ? `Ensure you use the following packages in your code: ${packages.join(", ")}.`
-      : "Use standard React and Tailwind CSS.";
+      ? `Use these when they help match the sketch (imports allowed): ${packages.join(", ")}. If a package is not needed for fidelity, omit it.`
+      : "Use standard React and Tailwind CSS only unless the sketch clearly needs icons or motion.";
 
     const prompt = `
-      You are an expert React developer. I am providing you with a sketch of a UI component.
-      Your task is to convert this sketch into high-quality, functional, and responsive React code using Tailwind CSS.
-      
-      Requirements:
-      1. Use React (Next.js App Router compatible).
-      2. Use Tailwind CSS for styling.
-      3. ${packageContext}
-      4. Make the component look polished, premium, and as close to the sketch as possible.
-      5. Include any necessary state management using React hooks.
-      6. Provide ONLY the code for the main component. Do not include imports like 'import React from "react"' unless necessary for hooks.
-      7. Export the UI as a single default export with a PascalCase name, e.g. export default function SketchView() { ... } (not anonymous default). This enables live preview.
-      8. Return the response as a JSON object with a 'code' field.
-    `;
+You are an expert UI engineer. You receive a hand-drawn or wireframe image of a screen or component.
+
+## Primary goal: structural fidelity to the image
+The generated UI must match the SKETCH, not a generic pretty template.
+
+Before writing code, mentally inventory the image in reading order (top → bottom, left → right):
+- Outer frame / page vs modals / cards
+- Every distinct block, column, row, divider, list, table, form, toolbar, header, footer, sidebar
+- Approximate hierarchy: what is nested inside what
+- Text labels, headings, button captions, placeholder copy (transcribe legible text; if illegible, use neutral placeholders like "Label", "Button", "Search…")
+- Icon or image placeholders as simple shapes or Lucide icons only if the user selected lucide
+- Rough proportions when obvious (e.g. sidebar width vs main area, stacked vs side-by-side)
+
+Rules:
+- **Do not invent** major sections, extra cards, marketing blocks, or navigation that are **not** visible in the sketch.
+- **Do not simplify** the layout to a single hero + CTA if the sketch shows multiple panels or steps.
+- Preserve **alignment intent**: if two boxes are side-by-side in the sketch, use a responsive row that becomes a column on small screens (see Responsive section).
+- Match **density**: sparse sketch → breathable spacing; dense sketch → tighter gaps but still readable.
+- Use Tailwind for colors and borders that **approximate** the sketch (wireframe = neutral grays + clear borders; color markers = similar hues).
+
+## Responsive (mandatory — every output)
+Implement **mobile-first** responsive behavior for the whole component:
+- Root wrapper: \`w-full max-w-6xl mx-auto px-4 sm:px-6 lg:px-8\` (or \`max-w-full\` for full-bleed dashboards) plus sensible vertical padding.
+- Layout: prefer \`flex flex-col\` by default; use \`sm:\` / \`md:\` / \`lg:\` breakpoints to switch to \`flex-row\`, \`grid\`, or multi-column **only when** the sketch implies columns on larger screens.
+- Use \`gap-*\`, \`min-w-0\`, and \`flex-1\` to avoid overflow; use \`overflow-x-auto\` for horizontal toolbars or tables on small screens.
+- Typography: scale with breakpoints where appropriate (e.g. \`text-2xl md:text-3xl\` for main titles).
+- Touch targets: interactive elements at least ~44px hit area on small screens (\`min-h-11\`, padding).
+- Images/avatars: \`max-w-full h-auto\`; no fixed widths that break narrow viewports unless the sketch is explicitly fixed-size.
+
+## Technical
+1. React only (Next.js App Router compatible). One main component file in the \`code\` string.
+2. Tailwind CSS utility classes for all styling.
+3. ${packageContext}
+4. Use hooks only when the sketch implies interaction (tabs, toggles, inputs, open/close).
+5. No markdown fences inside \`code\`. No prose outside the JSON.
+6. **export default function PascalCaseName** — named default export (e.g. \`export default function SketchView()\`). Required for live preview.
+7. Return **only** valid JSON: \`{ "code": "..." }\` where \`code\` is the full TSX source string.
+
+The sketch image is attached; follow it as the single source of truth for structure and content.
+    `.trim();
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
+      temperature: 0.35,
       messages: [
         {
           role: "user",

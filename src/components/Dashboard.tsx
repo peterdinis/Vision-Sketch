@@ -97,7 +97,7 @@ export default function Dashboard() {
                 Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Sketch</span>, our <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Reality.</span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
-                The most advanced AI bridge for designers and developers. Transform hand-drawn ideas into production-ready React components.
+                Upload a clear photo of your sketch — the model maps layout and labels to code. Output is always responsive (mobile-first). Live preview shows the running component; pixel-perfect match depends on sketch clarity.
               </p>
             </motion.div>
 
