@@ -29,13 +29,13 @@ export function approxDecodedBytesFromDataUrl(dataUrl: string): number {
 
 export const imageDataUrlSchema = z
   .string()
-  .min(1, "Obrázok je povinný")
+  .min(1, "Image is required")
   .refine((s) => IMAGE_DATA_URL_REGEX.test(s), {
-    message: "Povolené formáty: PNG, JPEG, WebP, GIF",
+    message: "Allowed formats: PNG, JPEG, WebP, GIF",
   })
   .refine((s) => approxDecodedBytesFromDataUrl(s) > 0, {
-    message: "Neplatné dáta obrázka",
+    message: "Invalid image data",
   })
   .refine((s) => approxDecodedBytesFromDataUrl(s) <= MAX_UPLOAD_IMAGE_BYTES, {
-    message: `Maximálna veľkosť súboru je ${MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB`,
+    message: `Maximum file size is ${MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB`,
   });

@@ -128,8 +128,10 @@ export const generateCode = actionClient
       requireOpenAiApiKey();
       const result = await getGeneratedCode(image, packages || []);
       return { success: true, data: result };
-    } catch (error: any) {
+    } catch (error: unknown) {
       console.error("AI Generation Error:", error);
-      throw new Error(error.message || "Internal Server Error");
+      const message =
+        error instanceof Error ? error.message : "Internal Server Error";
+      throw new Error(message);
     }
   });

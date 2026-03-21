@@ -4,7 +4,7 @@ import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransiti
 import { UploadSection } from "./UploadSection";
 import { PackageSelector } from "./PackageSelector";
 import { CodePreviewSkeleton } from "./CodePreviewSkeleton";
-import { Brush, Sparkles, Wand2, Layout, Github, Zap } from "lucide-react";
+import { Brush, Sparkles, Wand2, Layout, Zap } from "lucide-react";
 import { motion } from "framer-motion";
 import { generateCode } from "@/app/actions";
 import { Button } from "@/components/ui/button";
@@ -40,10 +40,12 @@ export default function Dashboard() {
 
   useEffect(() => {
     if (prevStatusRef.current === "executing" && status !== "executing") {
-      setOptimisticGenerating(false);
+      startTransition(() => {
+        setOptimisticGenerating(false);
+      });
     }
     prevStatusRef.current = status;
-  }, [status, setOptimisticGenerating]);
+  }, [status, setOptimisticGenerating, startTransition]);
 
   const isActionPending = status === "executing";
   const isBusy = isActionPending || isOptimisticGenerating;
@@ -75,12 +77,12 @@ export default function Dashboard() {
           <motion.div 
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
-            className="w-12 h-12 bg-gradient-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20"
+            className="w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20"
           >
             <Brush className="w-7 h-7 text-white" />
           </motion.div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter">
-            Vision<span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-purple-600">Sketch</span>
+            Vision<span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-purple-600">Sketch</span>
           </h1>
         </div>
         
@@ -121,7 +123,7 @@ export default function Dashboard() {
                 </Badge>
               </div>
               <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1] text-balance">
-                Your <span className="text-transparent bg-clip-text bg-gradient-to-r from-blue-500 to-cyan-400">Sketch</span>, our <span className="text-transparent bg-clip-text bg-gradient-to-r from-purple-500 to-pink-500">Reality.</span>
+                Your <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-cyan-400">Sketch</span>, our <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-500 to-pink-500">Reality.</span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
                 Upload a clear photo of your sketch — the model maps layout and labels to code. Output is always responsive (mobile-first). Live preview shows the running component; pixel-perfect match depends on sketch clarity.
@@ -163,7 +165,7 @@ export default function Dashboard() {
                       aria-busy={isBusy}
                       className={cn(
                         "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
-                        image && !isBusy && "bg-gradient-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                        image && !isBusy && "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
                       )}
                     >
                       {isBusy ? (
@@ -178,7 +180,7 @@ export default function Dashboard() {
                         : "Generate UI code"}
 
                       {/* Subtle shine effect */}
-                      <div className="absolute inset-0 bg-gradient-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
                     </Button>
                   </div>
 
@@ -193,7 +195,7 @@ export default function Dashboard() {
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
-            className="lg:col-span-12 xl:col-span-7 h-[600px] md:h-[700px] xl:h-[850px] xl:sticky xl:top-8"
+            className="lg:col-span-12 xl:col-span-7 h-150 md:h-175 xl:h-212.5 xl:sticky xl:top-8"
           >
             <Suspense fallback={<CodePreviewSkeleton />}>
               <CodePreview code={code} isLoading={isBusy} />

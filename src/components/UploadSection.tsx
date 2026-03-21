@@ -1,7 +1,9 @@
 "use client";
 
 import { useState } from "react";
+import type { FilePondFile } from "filepond";
 import { FilePond, registerPlugin } from "react-filepond";
+import type { FilePondProps } from "react-filepond";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageResize from "filepond-plugin-image-resize";
 import FilePondPluginImageTransform from "filepond-plugin-image-transform";
@@ -24,24 +26,21 @@ interface UploadSectionProps {
 }
 
 export function UploadSection({ onUpload }: UploadSectionProps) {
-  const [files, setFiles] = useState<any[]>([]);
+  const [files, setFiles] = useState<FilePondFile[]>([]);
 
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Povolené: PNG, JPEG, WebP, GIF · max. {MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB · dlhšia strana sa pred odoslaním zmenší na max. {UPLOAD_MAX_DIMENSION} px (zachovaný pomer strán).
+        Allowed: PNG, JPEG, WebP, GIF · max {MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB · longer side is scaled down to max {UPLOAD_MAX_DIMENSION} px before upload (aspect ratio preserved).
       </p>
       <FilePond
-        files={files}
+        files={files as unknown as FilePondProps["files"]}
         onupdatefiles={setFiles}
         allowMultiple={false}
         maxFiles={1}
-        maxFileSize={MAX_UPLOAD_IMAGE_BYTES}
         acceptedFileTypes={[...ALLOWED_IMAGE_MIME]}
-        labelFileTypeNotAllowed="Nepovolený typ súboru (použi PNG, JPEG, WebP alebo GIF)."
-        labelMaxFileSizeExceeded="Súbor je príliš veľký."
         name="files"
-        labelIdle='Presuň sem skicu alebo <span class="filepond--label-action">vyber súbor</span>'
+        labelIdle='Drag & drop your sketch or <span class="filepond--label-action">browse</span>'
         imagePreviewHeight={170}
         imageResizeMode="contain"
         imageResizeTargetWidth={UPLOAD_MAX_DIMENSION}
@@ -58,9 +57,12 @@ export function UploadSection({ onUpload }: UploadSectionProps) {
         )}
         beforeAddFile={(item) => {
           const t = item.file?.type ?? "";
-          return (ALLOWED_IMAGE_MIME as readonly string[]).includes(t);
+          if (!(ALLOWED_IMAGE_MIME as readonly string[]).includes(t)) return false;
+          const size = item.file?.size ?? 0;
+          if (size > MAX_UPLOAD_IMAGE_BYTES) return false;
+          return true;
         }}
-        onpreparefile={(file, output) => {
+        onpreparefile={(_file, output: Blob) => {
           const reader = new FileReader();
           reader.onloadend = () => {
             const base64 = reader.result as string;
