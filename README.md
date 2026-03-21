@@ -8,6 +8,19 @@ This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-
 
 Variable names must match `.env.example` — the server reads `OPENAI_API_KEY` for the OpenAI client.
 
+## Lint & format (Biome)
+
+This project uses [Biome](https://biomejs.dev) for formatting, import sorting, and linting (alongside ESLint via `npm run lint`).
+
+```bash
+npm run lint:biome    # check only
+npm run format        # format all files
+npm run check:biome   # check + auto-fix safe issues
+npm run ci:biome      # CI mode (fail on drift)
+```
+
+Install the [Biome VS Code / Cursor extension](https://biomejs.dev/guides/editors/first-party-extensions/) for format-on-save.
+
 ## Getting Started
 
 First, run the development server:
