@@ -85,13 +85,7 @@ export default function Dashboard() {
         </div>
         
         <div className="flex items-center gap-2 md:gap-4">
-          <Button variant="ghost" size="icon" className="rounded-full">
-            <Github className="w-5 h-5" />
-          </Button>
           <ThemeToggle />
-          <Button className="rounded-full px-6 hidden md:flex">
-            Sign In
-          </Button>
         </div>
       </motion.header>
 
