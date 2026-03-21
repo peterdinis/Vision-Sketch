@@ -1,20 +1,20 @@
 "use client";
 
-import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { UploadSection } from "./UploadSection";
-import { PackageSelector } from "./PackageSelector";
-import { CodePreviewSkeleton } from "./CodePreviewSkeleton";
-import { Brush, Sparkles, Wand2, Layout, Zap } from "lucide-react";
 import { motion } from "framer-motion";
+import { Brush, Layout, Sparkles, Wand2, Zap } from "lucide-react";
+import { useAction } from "next-safe-action/hooks";
+import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
 import { generateCode } from "@/app/actions";
-import { Button } from "@/components/ui/button";
-import { Card, CardContent, CardHeader, CardTitle, CardDescription } from "@/components/ui/card";
 import { Badge } from "@/components/ui/badge";
+import { Button } from "@/components/ui/button";
+import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
 import { Separator } from "@/components/ui/separator";
 import { cn } from "@/lib/utils";
-import { ThemeToggle } from "./ThemeToggle";
-import { useAction } from "next-safe-action/hooks";
+import { CodePreviewSkeleton } from "./CodePreviewSkeleton";
 import { InlineError } from "./InlineError";
+import { PackageSelector } from "./PackageSelector";
+import { ThemeToggle } from "./ThemeToggle";
+import { UploadSection } from "./UploadSection";
 
 const CodePreview = lazy(() => import("./CodePreview"));
 
@@ -25,7 +25,7 @@ export default function Dashboard() {
 
   const [isOptimisticGenerating, setOptimisticGenerating] = useOptimistic(
     false,
-    (_current, next: boolean) => next
+    (_current, next: boolean) => next,
   );
   const [, startTransition] = useTransition();
   const prevStatusRef = useRef<string | undefined>(undefined);
@@ -45,12 +45,11 @@ export default function Dashboard() {
       });
     }
     prevStatusRef.current = status;
-  }, [status, setOptimisticGenerating, startTransition]);
+  }, [status, setOptimisticGenerating]);
 
   const isActionPending = status === "executing";
   const isBusy = isActionPending || isOptimisticGenerating;
-  const error =
-    isBusy ? undefined : result.serverError || result.validationErrors?._errors?.[0];
+  const error = isBusy ? undefined : result.serverError || result.validationErrors?._errors?.[0];
 
   const handleGenerate = () => {
     if (!image) return;
@@ -68,13 +67,19 @@ export default function Dashboard() {
         <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-500/5 blur-[120px] rounded-full" />
       </div>
 
-      <motion.header 
+      <motion.header
         initial={{ opacity: 0, y: -20 }}
         animate={{ opacity: 1, y: 0 }}
         className="max-w-7xl mx-auto flex items-center justify-between mb-8 md:mb-16"
       >
-        <div className="flex items-center gap-3 group cursor-pointer" onClick={() => window.location.reload()}>
-          <motion.div 
+        <motion.button
+          type="button"
+          className="flex items-center gap-3 group cursor-pointer bg-transparent border-none p-0 text-left"
+          onClick={() => window.location.reload()}
+          whileHover={{ scale: 1.02 }}
+          whileTap={{ scale: 0.98 }}
+        >
+          <motion.div
             whileHover={{ scale: 1.1, rotate: 5 }}
             whileTap={{ scale: 0.9 }}
             className="w-12 h-12 bg-linear-to-br from-blue-500 to-purple-600 rounded-2xl flex items-center justify-center shadow-lg shadow-blue-500/20"
@@ -82,10 +87,13 @@ export default function Dashboard() {
             <Brush className="w-7 h-7 text-white" />
           </motion.div>
           <h1 className="text-2xl md:text-3xl font-black tracking-tighter">
-            Vision<span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-purple-600">Sketch</span>
+            Vision
+            <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-purple-600">
+              Sketch
+            </span>
           </h1>
-        </div>
-        
+        </motion.button>
+
         <div className="flex items-center gap-2 md:gap-4">
           <ThemeToggle />
         </div>
@@ -97,7 +105,6 @@ export default function Dashboard() {
         </div>
 
         <div className="grid grid-cols-1 lg:grid-cols-12 gap-8 lg:gap-12 items-start">
-
           {/* Left Panel: Configuration */}
           <div className="lg:col-span-12 xl:col-span-5 space-y-8 lg:sticky lg:top-8">
             <motion.div
@@ -105,7 +112,7 @@ export default function Dashboard() {
               animate={{ opacity: 1, y: 0 }}
               className="space-y-6"
             >
-                  <div className="flex flex-wrap gap-2">
+              <div className="flex flex-wrap gap-2">
                 {isOptimisticGenerating && !isActionPending && (
                   <Badge
                     variant="outline"
@@ -115,18 +122,33 @@ export default function Dashboard() {
                     Queued…
                   </Badge>
                 )}
-                <Badge variant="secondary" className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none">
+                <Badge
+                  variant="secondary"
+                  className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none"
+                >
                   AI-Powered Generation
                 </Badge>
-                <Badge variant="outline" className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-purple-500/30 text-purple-600 dark:text-purple-400">
+                <Badge
+                  variant="outline"
+                  className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-purple-500/30 text-purple-600 dark:text-purple-400"
+                >
                   Next.js 16 + Tailwind 4
                 </Badge>
               </div>
               <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1] text-balance">
-                Your <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-cyan-400">Sketch</span>, our <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-500 to-pink-500">Reality.</span>
+                Your{" "}
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-blue-500 to-cyan-400">
+                  Sketch
+                </span>
+                , our{" "}
+                <span className="text-transparent bg-clip-text bg-linear-to-r from-purple-500 to-pink-500">
+                  Reality.
+                </span>
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
-                Upload a clear photo of your sketch — the model maps layout and labels to code. Output is always responsive (mobile-first). Live preview shows the running component; pixel-perfect match depends on sketch clarity.
+                Upload a clear photo of your sketch — the model maps layout and labels to code.
+                Output is always responsive (mobile-first). Live preview shows the running
+                component; pixel-perfect match depends on sketch clarity.
               </p>
             </motion.div>
 
@@ -148,10 +170,7 @@ export default function Dashboard() {
 
                   <Separator className="opacity-50" />
 
-                  <PackageSelector
-                    selectedPackages={packages}
-                    onChange={setPackages}
-                  />
+                  <PackageSelector selectedPackages={packages} onChange={setPackages} />
 
                   <div className="w-full space-y-4">
                     <input type="hidden" name="image" value={image || ""} />
@@ -165,7 +184,9 @@ export default function Dashboard() {
                       aria-busy={isBusy}
                       className={cn(
                         "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
-                        image && !isBusy && "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]"
+                        image &&
+                          !isBusy &&
+                          "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]",
                       )}
                     >
                       {isBusy ? (
@@ -191,7 +212,7 @@ export default function Dashboard() {
           </div>
 
           {/* Right Panel: Output */}
-          <motion.div 
+          <motion.div
             initial={{ opacity: 0, x: 20 }}
             animate={{ opacity: 1, x: 0 }}
             transition={{ delay: 0.3 }}
@@ -201,7 +222,6 @@ export default function Dashboard() {
               <CodePreview code={code} isLoading={isBusy} />
             </Suspense>
           </motion.div>
-
         </div>
       </main>
 
@@ -212,11 +232,19 @@ export default function Dashboard() {
             <span className="font-bold tracking-tighter">VisionSketch AI</span>
           </div>
           <div className="flex gap-4">
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Safe Actions API</Badge>
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Magic Hour ML</Badge>
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">Edge Caching</Badge>
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
+              Safe Actions API
+            </Badge>
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
+              Magic Hour ML
+            </Badge>
+            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
+              Edge Caching
+            </Badge>
           </div>
-          <p className="text-xs text-muted-foreground font-medium">© 2026 VisionSketch. All rights reserved.</p>
+          <p className="text-xs text-muted-foreground font-medium">
+            © 2026 VisionSketch. All rights reserved.
+          </p>
         </div>
       </footer>
     </div>

@@ -8,7 +8,7 @@ export function requireOpenAiApiKey(): string {
   const key = process.env[OPENAI_API_KEY_ENV];
   if (!key?.trim()) {
     throw new Error(
-      `Missing ${OPENAI_API_KEY_ENV}. Copy .env.example to .env.local and add your key from https://platform.openai.com/api-keys`
+      `Missing ${OPENAI_API_KEY_ENV}. Copy .env.example to .env.local and add your key from https://platform.openai.com/api-keys`,
     );
   }
   return key.trim();

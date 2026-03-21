@@ -18,8 +18,17 @@ export const metadata: Metadata = {
     default: "VisionSketch AI",
     template: "%s | VisionSketch AI",
   },
-  description: "Transform your hand-drawn sketches into production-ready React components with generative AI.",
-  keywords: ["AI", "React", "Next.js", "Design", "Code Generation", "Tailwind CSS", "Developer Tools"],
+  description:
+    "Transform your hand-drawn sketches into production-ready React components with generative AI.",
+  keywords: [
+    "AI",
+    "React",
+    "Next.js",
+    "Design",
+    "Code Generation",
+    "Tailwind CSS",
+    "Developer Tools",
+  ],
   authors: [{ name: "VisionSketch AI Team" }],
   creator: "VisionSketch AI",
   openGraph: {
@@ -58,9 +67,7 @@ export default function RootLayout({
 }>) {
   return (
     <html lang="en" suppressHydrationWarning>
-      <body
-        className={`${geistSans.variable} ${geistMono.variable} antialiased`}
-      >
+      <body className={`${geistSans.variable} ${geistMono.variable} antialiased`}>
         <ThemeProvider
           attribute="class"
           defaultTheme="system"

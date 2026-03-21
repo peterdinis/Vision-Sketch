@@ -1,19 +1,18 @@
-"use client"
+"use client";
 
-import * as React from "react"
-import { AlertCircle, RefreshCcw, Home, LucideIcon } from "lucide-react"
-import { motion } from "framer-motion"
-import { Button } from "@/components/ui/button"
-import { cn } from "@/lib/utils"
+import { motion } from "framer-motion";
+import { AlertCircle, Home, type LucideIcon, RefreshCcw } from "lucide-react";
+import { Button } from "@/components/ui/button";
+import { cn } from "@/lib/utils";
 
 interface ErrorStateProps {
-  title?: string
-  message: string
-  icon?: LucideIcon
-  onRetry?: () => void
-  onHome?: () => void
-  className?: string
-  errorId?: string
+  title?: string;
+  message: string;
+  icon?: LucideIcon;
+  onRetry?: () => void;
+  onHome?: () => void;
+  className?: string;
+  errorId?: string;
 }
 
 export function ErrorState({
@@ -27,7 +26,7 @@ export function ErrorState({
 }: ErrorStateProps) {
   return (
     <div className={cn("flex items-center justify-center p-6 min-h-[400px]", className)}>
-      <motion.div 
+      <motion.div
         initial={{ opacity: 0, scale: 0.95 }}
         animate={{ opacity: 1, scale: 1 }}
         className="max-w-md w-full text-center space-y-8"
@@ -38,19 +37,17 @@ export function ErrorState({
             <Icon className="w-12 h-12 text-destructive" />
           </div>
         </div>
-        
+
         <div className="space-y-3">
           <h2 className="text-3xl font-black tracking-tight">{title}</h2>
-          <p className="text-muted-foreground text-lg leading-relaxed">
-            {message}
-          </p>
+          <p className="text-muted-foreground text-lg leading-relaxed">{message}</p>
         </div>
 
         <div className="flex flex-col sm:flex-row gap-4 justify-center">
           {onRetry && (
-            <Button 
-              onClick={onRetry} 
-              size="lg" 
+            <Button
+              onClick={onRetry}
+              size="lg"
               className="rounded-2xl gap-2 font-bold px-8 shadow-xl shadow-primary/20 transition-all hover:scale-[1.02]"
             >
               <RefreshCcw className="w-5 h-5" />
@@ -58,9 +55,9 @@ export function ErrorState({
             </Button>
           )}
           {onHome && (
-            <Button 
-              variant="outline" 
-              size="lg" 
+            <Button
+              variant="outline"
+              size="lg"
               className="rounded-2xl gap-2 font-bold px-8 border-border/50 hover:bg-secondary/50 transition-all"
               onClick={onHome}
             >
@@ -69,7 +66,7 @@ export function ErrorState({
             </Button>
           )}
         </div>
-        
+
         {errorId && (
           <p className="text-[10px] uppercase font-mono tracking-widest text-muted-foreground/50 pt-8">
             Error ID: {errorId}
@@ -77,5 +74,5 @@ export function ErrorState({
         )}
       </motion.div>
     </div>
-  )
+  );
 }

@@ -1,25 +1,21 @@
 "use client";
 
-import { useState } from "react";
 import type { FilePondFile } from "filepond";
-import { FilePond, registerPlugin } from "react-filepond";
-import type { FilePondProps } from "react-filepond";
 import FilePondPluginImagePreview from "filepond-plugin-image-preview";
 import FilePondPluginImageResize from "filepond-plugin-image-resize";
 import FilePondPluginImageTransform from "filepond-plugin-image-transform";
-import { cn } from "@/lib/utils";
+import { useState } from "react";
+import type { FilePondProps } from "react-filepond";
+import { FilePond, registerPlugin } from "react-filepond";
 import {
   ALLOWED_IMAGE_MIME,
   MAX_UPLOAD_IMAGE_BYTES,
   UPLOAD_MAX_DIMENSION,
 } from "@/lib/upload-rules";
+import { cn } from "@/lib/utils";
 
 // Register the plugins
-registerPlugin(
-  FilePondPluginImagePreview,
-  FilePondPluginImageResize,
-  FilePondPluginImageTransform
-);
+registerPlugin(FilePondPluginImagePreview, FilePondPluginImageResize, FilePondPluginImageTransform);
 
 interface UploadSectionProps {
   onUpload: (base64: string) => void;
@@ -31,7 +27,8 @@ export function UploadSection({ onUpload }: UploadSectionProps) {
   return (
     <div className="space-y-4">
       <p className="text-xs text-muted-foreground leading-relaxed">
-        Allowed: PNG, JPEG, WebP, GIF · max {MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB · longer side is scaled down to max {UPLOAD_MAX_DIMENSION} px before upload (aspect ratio preserved).
+        Allowed: PNG, JPEG, WebP, GIF · max {MAX_UPLOAD_IMAGE_BYTES / 1024 / 1024} MB · longer side
+        is scaled down to max {UPLOAD_MAX_DIMENSION} px before upload (aspect ratio preserved).
       </p>
       <FilePond
         files={files as unknown as FilePondProps["files"]}
@@ -51,10 +48,7 @@ export function UploadSection({ onUpload }: UploadSectionProps) {
         styleProgressIndicatorPosition="right bottom"
         styleButtonRemoveItemPosition="left bottom"
         styleButtonProcessItemPosition="right bottom"
-        className={cn(
-          "vision-sketch-pond",
-          "dark:filepond--root"
-        )}
+        className={cn("vision-sketch-pond", "dark:filepond--root")}
         beforeAddFile={(item) => {
           const t = item.file?.type ?? "";
           if (!(ALLOWED_IMAGE_MIME as readonly string[]).includes(t)) return false;
@@ -71,7 +65,7 @@ export function UploadSection({ onUpload }: UploadSectionProps) {
           reader.readAsDataURL(output);
         }}
       />
-      
+
       <style jsx global>{`
         .filepond--root {
           margin-bottom: 0;

@@ -1,15 +1,15 @@
 "use server";
 
-import { OpenAI } from "openai";
-import { unstable_cache } from "next/cache";
-import { actionClient } from "@/lib/safe-action";
-import { z } from "zod";
 import MagicHour from "magic-hour";
+import { unstable_cache } from "next/cache";
+import { OpenAI } from "openai";
+import { z } from "zod";
 import { requireOpenAiApiKey } from "@/lib/env";
+import { actionClient } from "@/lib/safe-action";
 import { imageDataUrlSchema } from "@/lib/upload-rules";
 
 const magicHour = new MagicHour({
-  token: process.env.MAGIC_HOUR_API_KEY
+  token: process.env.MAGIC_HOUR_API_KEY,
 });
 
 const getGeneratedCode = unstable_cache(
@@ -24,7 +24,7 @@ const getGeneratedCode = unstable_cache(
             scaleFactor: 2.0,
             style: { enhancement: "Balanced" },
           },
-          { waitForCompletion: true }
+          { waitForCompletion: true },
         );
 
         if (upscale.downloads && upscale.downloads.length > 0) {
@@ -35,9 +35,10 @@ const getGeneratedCode = unstable_cache(
       console.warn("Magic Hour processing failed, using original image", e);
     }
 
-    const packageContext = packages && packages.length > 0
-      ? `Use these when they help match the sketch (imports allowed): ${packages.join(", ")}. If a package is not needed for fidelity, omit it.`
-      : "Use standard React and Tailwind CSS only unless the sketch clearly needs icons or motion.";
+    const packageContext =
+      packages && packages.length > 0
+        ? `Use these when they help match the sketch (imports allowed): ${packages.join(", ")}. If a package is not needed for fidelity, omit it.`
+        : "Use standard React and Tailwind CSS only unless the sketch clearly needs icons or motion.";
 
     const prompt = `
 You are an expert UI engineer. You receive a hand-drawn or wireframe image of a screen or component.
@@ -81,9 +82,11 @@ Implement **mobile-first** responsive behavior for the whole component:
 The sketch image is attached; follow it as the single source of truth for structure and content.
     `.trim();
 
-    const openai = new OpenAI({
-      apiKey: process.env.OPENAI_API_KEY!.trim(),
-    });
+    const apiKey = process.env.OPENAI_API_KEY?.trim();
+    if (!apiKey) {
+      throw new Error("Missing OPENAI_API_KEY. Copy .env.example to .env.local and add your key.");
+    }
+    const openai = new OpenAI({ apiKey });
 
     const response = await openai.chat.completions.create({
       model: "gpt-4o",
@@ -113,7 +116,7 @@ The sketch image is attached; follow it as the single source of truth for struct
     return JSON.parse(content);
   },
   ["code-generation"],
-  { revalidate: 3600 }
+  { revalidate: 3600 },
 );
 
 const schema = z.object({
@@ -130,8 +133,7 @@ export const generateCode = actionClient
       return { success: true, data: result };
     } catch (error: unknown) {
       console.error("AI Generation Error:", error);
-      const message =
-        error instanceof Error ? error.message : "Internal Server Error";
+      const message = error instanceof Error ? error.message : "Internal Server Error";
       throw new Error(message);
     }
   });

@@ -1,10 +1,10 @@
 "use client";
 
+import { AnimatePresence, motion } from "framer-motion";
+import { Check, Code as CodeIcon, Copy, Loader2, Play } from "lucide-react";
+import { useMemo, useState } from "react";
 import { Prism as SyntaxHighlighter } from "react-syntax-highlighter";
 import { atomDark } from "react-syntax-highlighter/dist/esm/styles/prism";
-import { Copy, Check, Play, Code as CodeIcon, Loader2 } from "lucide-react";
-import { useMemo, useState } from "react";
-import { motion, AnimatePresence } from "framer-motion";
 import { cn } from "@/lib/utils";
 
 interface CodePreviewProps {
@@ -58,7 +58,9 @@ const inferMainComponentName = (source: string): string | null => {
   const pascalFuncs = funcNames.filter((n) => /^[A-Z]/.test(n));
   if (pascalFuncs.length) return pascalFuncs[pascalFuncs.length - 1];
 
-  const constNames = [...source.matchAll(/\bconst\s+(\w+)\s*=\s*(?:async\s*)?\(/g)].map((x) => x[1]);
+  const constNames = [...source.matchAll(/\bconst\s+(\w+)\s*=\s*(?:async\s*)?\(/g)].map(
+    (x) => x[1],
+  );
   const pascalConsts = constNames.filter((n) => /^[A-Z]/.test(n));
   if (pascalConsts.length) return pascalConsts[pascalConsts.length - 1];
 
@@ -75,7 +77,7 @@ const stripImportsAndExports = (source: string) => {
   // Multiline imports (including `import type` and side-effect imports)
   next = next.replace(
     /^\s*import\s+(?:type\s+)?(?:[\w*{}\s,\n]+\s+from\s+)?["'][^"']+["']\s*;?/gm,
-    ""
+    "",
   );
   next = next.replace(/^\s*import\s+["'][^"']+["']\s*;?/gm, "");
 
@@ -87,8 +89,14 @@ const stripImportsAndExports = (source: string) => {
 };
 
 const buildResolveReturn = (inferred: string | null) => {
-  const chain = [...new Set([inferred, "Preview", "App", "Component"].filter((x): x is string => Boolean(x && IDENT_RE.test(x))))];
-  return chain.map((n) => `typeof ${n} !== "undefined" ? ${n}`).join(" : ") + " : null";
+  const chain = [
+    ...new Set(
+      [inferred, "Preview", "App", "Component"].filter((x): x is string =>
+        Boolean(x && IDENT_RE.test(x)),
+      ),
+    ),
+  ];
+  return `${chain.map((n) => `typeof ${n} !== "undefined" ? ${n}`).join(" : ")} : null`;
 };
 
 const buildPreviewDoc = (sourceCode: string) => {
@@ -105,17 +113,15 @@ const buildPreviewDoc = (sourceCode: string) => {
       ? lucideNames
           .map(
             (n) =>
-              `var ${n} = function (props) { return React.createElement("span", Object.assign({ title: "${n}", style: { display: "inline-block", width: "1em", height: "1em", borderRadius: "2px", background: "currentColor", opacity: 0.35 } }, props)); };`
+              `var ${n} = function (props) { return React.createElement("span", Object.assign({ title: "${n}", style: { display: "inline-block", width: "1em", height: "1em", borderRadius: "2px", background: "currentColor", opacity: 0.35 } }, props)); };`,
           )
           .join("\n")
       : "";
 
   const prelude = [motionStub, cnStub, lucideStubs].filter(Boolean).join("\n");
-  const wrappedInner = prelude + "\n" + userBody + "\nreturn (" + resolveReturn + ");";
+  const wrappedInner = `${prelude}\n${userBody}\nreturn (${resolveReturn});`;
 
-  const escapedWrapped = JSON.stringify(
-    "function __getPreviewComponent() {\n" + wrappedInner + "\n}"
-  );
+  const escapedWrapped = JSON.stringify(`function __getPreviewComponent() {\n${wrappedInner}\n}`);
 
   return `<!doctype html>
 <html>
@@ -202,7 +208,8 @@ export function CodePreview({ code, isLoading }: CodePreviewProps) {
         <div className="w-12 h-12 border-4 border-primary border-t-transparent rounded-full animate-spin mb-4" />
         <h3 className="text-xl font-semibold mb-2">Generating your code...</h3>
         <p className="text-muted-foreground max-w-sm">
-          Vision Sketch is analyzing your sketch and turning it into reality. This usually takes a few seconds.
+          Vision Sketch is analyzing your sketch and turning it into reality. This usually takes a
+          few seconds.
         </p>
       </div>
     );
@@ -222,25 +229,32 @@ export function CodePreview({ code, isLoading }: CodePreviewProps) {
       <div className="flex items-center justify-between px-4 py-3 border-b border-border/50 bg-secondary/30">
         <div className="flex bg-background/50 p-1 rounded-lg border border-border/50">
           <button
+            type="button"
             onClick={() => setView("code")}
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              view === "code" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              view === "code"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <CodeIcon className="w-3.5 h-3.5" /> Code
           </button>
           <button
+            type="button"
             onClick={() => setView("preview")}
             className={cn(
               "flex items-center gap-2 px-3 py-1.5 rounded-md text-xs font-medium transition-all",
-              view === "preview" ? "bg-primary text-primary-foreground shadow-sm" : "text-muted-foreground hover:text-foreground"
+              view === "preview"
+                ? "bg-primary text-primary-foreground shadow-sm"
+                : "text-muted-foreground hover:text-foreground",
             )}
           >
             <Play className="w-3.5 h-3.5" /> Preview
           </button>
         </div>
         <button
+          type="button"
           onClick={copyToClipboard}
           title="Copy generated code"
           className="p-2 hover:bg-secondary rounded-lg transition-colors text-muted-foreground hover:text-foreground"
