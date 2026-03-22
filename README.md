@@ -1,57 +1,66 @@
-This is a [Next.js](https://nextjs.org) project bootstrapped with [`create-next-app`](https://nextjs.org/docs/app/api-reference/cli/create-next-app).
+# Vision Sketch
 
-## Environment
+Turn hand-drawn UI sketches into **responsive React** code with **Tailwind CSS**, powered by OpenAI vision. Upload a sketch, pick optional libraries (Tailwind, Lucide, Framer Motion, shadcn), and get TSX you can copy—with a **live preview** in the browser.
+
+## Tech stack
+
+- **Next.js** 16 (App Router) · **React** 19 · **TypeScript**
+- **Tailwind CSS** v4 · **shadcn/ui**-style components
+- **OpenAI** (`gpt-4o` + vision) via server actions (**next-safe-action** + **Zod**)
+- Optional **Magic Hour** upscaling before vision
+- **Biome** (format + lint) · **ESLint** (`npm run lint`)
+
+## Prerequisites
+
+- Node.js 20+
+- An [OpenAI API key](https://platform.openai.com/api-keys) with vision-capable model access
+
+## Setup
+
+```bash
+npm install
+```
+
+### Environment
 
 1. Copy `.env.example` to `.env.local`.
-2. Set **`OPENAI_API_KEY`** (required) from [OpenAI API keys](https://platform.openai.com/api-keys).
-3. Optionally set **`MAGIC_HOUR_API_KEY`** for sketch upscaling before vision.
+2. Set **`OPENAI_API_KEY`** (required).
+3. Optionally set **`MAGIC_HOUR_API_KEY`** for sketch upscaling before analysis.
 
-Variable names must match `.env.example` — the server reads `OPENAI_API_KEY` for the OpenAI client.
+Variable names must match `.env.example`.
 
-## Lint & format (Biome)
+## Scripts
 
-This project uses [Biome](https://biomejs.dev) for formatting, import sorting, and linting (alongside ESLint via `npm run lint`).
+| Command | Description |
+|--------|-------------|
+| `npm run dev` | Start dev server at [http://localhost:3000](http://localhost:3000) |
+| `npm run build` | Production build |
+| `npm run start` | Run production server |
+| `npm run lint` | ESLint |
+| `npm run lint:biome` | Biome check only |
+| `npm run format` | Biome format (write) |
+| `npm run check:biome` | Biome check + safe fixes |
+| `npm run ci:biome` | Biome CI mode (no write) |
 
-```bash
-npm run lint:biome    # check only
-npm run format        # format all files
-npm run check:biome   # check + auto-fix safe issues
-npm run ci:biome      # CI mode (fail on drift)
-```
+Install the [Biome editor extension](https://biomejs.dev/guides/editors/first-party-extensions/) for format-on-save.
 
-Install the [Biome VS Code / Cursor extension](https://biomejs.dev/guides/editors/first-party-extensions/) for format-on-save.
+## How it works
 
-## Getting Started
+1. Upload a **PNG / JPEG / WebP / GIF** sketch (size limits enforced client- and server-side).
+2. Choose packages to bias the generated code.
+3. **Generate** runs a server action: optional Magic Hour upscale → OpenAI returns JSON with a `code` field.
+4. Review **Code** and **Preview** tabs; copy TSX into your own app.
 
-First, run the development server:
+## Project layout (high level)
 
-```bash
-npm run dev
-# or
-yarn dev
-# or
-pnpm dev
-# or
-bun dev
-```
+- `src/app/` — routes, `actions.ts` (generation), global styles
+- `src/components/` — dashboard, upload, code preview, UI primitives
+- `src/lib/` — env helpers, upload validation, utilities
 
-Open [http://localhost:3000](http://localhost:3000) with your browser to see the result.
+## Deploy
 
-You can start editing the page by modifying `app/page.tsx`. The page auto-updates as you edit the file.
+Deploy like any Next.js app (e.g. [Vercel](https://vercel.com/docs/frameworks/nextjs)). Set **`OPENAI_API_KEY`** (and optional **`MAGIC_HOUR_API_KEY`**) in the host’s environment variables—never commit secrets.
 
-This project uses [`next/font`](https://nextjs.org/docs/app/building-your-application/optimizing/fonts) to automatically optimize and load [Geist](https://vercel.com/font), a new font family for Vercel.
+## License
 
-## Learn More
-
-To learn more about Next.js, take a look at the following resources:
-
-- [Next.js Documentation](https://nextjs.org/docs) - learn about Next.js features and API.
-- [Learn Next.js](https://nextjs.org/learn) - an interactive Next.js tutorial.
-
-You can check out [the Next.js GitHub repository](https://github.com/vercel/next.js) - your feedback and contributions are welcome!
-
-## Deploy on Vercel
-
-The easiest way to deploy your Next.js app is to use the [Vercel Platform](https://vercel.com/new?utm_medium=default-template&filter=next.js&utm_source=create-next-app&utm_campaign=create-next-app-readme) from the creators of Next.js.
-
-Check out our [Next.js deployment documentation](https://nextjs.org/docs/app/building-your-application/deploying) for more details.
+Private / all rights reserved unless you add an explicit license file.
