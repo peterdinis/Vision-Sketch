@@ -1,4 +1,4 @@
-# Vision Sketch
+# Vision Sketch NOT FINISHED
 
 Turn hand-drawn UI sketches into **responsive React** code with **Tailwind CSS**, powered by OpenAI vision. Upload a sketch, pick optional libraries (Tailwind, Lucide, Framer Motion, shadcn), and get TSX you can copy—with a **live preview** in the browser.
 
