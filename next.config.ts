@@ -2,7 +2,9 @@ import type { NextConfig } from "next";
 
 const nextConfig: NextConfig = {
   reactStrictMode: true,
-  transpilePackages: ["lucide-react", "next-safe-action", "zod"],
+  experimental: {
+    optimizePackageImports: ["lucide-react", "framer-motion", "lucide-react"],
+  },
 };
 
 export default nextConfig;

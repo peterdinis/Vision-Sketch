@@ -3,7 +3,7 @@
 import { motion } from "framer-motion";
 import { Brush, Layout, Sparkles, Wand2, Zap } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
-import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
+import { lazy, Suspense, useCallback, useState } from "react";
 import { generateCode } from "@/app/api/generate/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
@@ -23,13 +23,6 @@ export default function Dashboard() {
   const [packages, setPackages] = useState<string[]>(["tailwind", "lucide"]);
   const [code, setCode] = useState<string | null>(null);
 
-  const [isOptimisticGenerating, setOptimisticGenerating] = useOptimistic(
-    false,
-    (_current, next: boolean) => next,
-  );
-  const [, startTransition] = useTransition();
-  const prevStatusRef = useRef<string | undefined>(undefined);
-
   const { execute, status, result } = useAction(generateCode, {
     onSuccess: ({ data }) => {
       if (data?.success && data.data) {
@@ -38,33 +31,22 @@ export default function Dashboard() {
     },
   });
 
-  useEffect(() => {
-    if (prevStatusRef.current === "executing" && status !== "executing") {
-      startTransition(() => {
-        setOptimisticGenerating(false);
-      });
-    }
-    prevStatusRef.current = status;
-  }, [status, setOptimisticGenerating]);
-
-  const isActionPending = status === "executing";
-  const isBusy = isActionPending || isOptimisticGenerating;
+  const isPending = status === "executing";
+  const isBusy = isPending;
+  const isActionPending = isPending;
   const error = isBusy ? undefined : result.serverError || result.validationErrors?._errors?.[0];
 
-  const handleGenerate = () => {
-    if (!image) return;
-    startTransition(() => {
-      setOptimisticGenerating(true);
-      execute({ image, packages });
-    });
-  };
+  const handleGenerate = useCallback(() => {
+    if (!image || isPending) return;
+    execute({ image, packages });
+  }, [image, packages, execute, isPending]);
 
   return (
-    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 selection:text-primary-foreground p-4 md:p-8 lg:p-12">
-      {/* Background blobs */}
+    <div className="min-h-screen bg-background text-foreground transition-colors duration-300 selection:bg-primary/30 selection:text-primary-foreground p-4 md:p-8 lg:p-12 relative overflow-hidden">
+      {/* Background blobs with refined HSL colors */}
       <div className="fixed inset-0 overflow-hidden pointer-events-none -z-10">
-        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-blue-500/10 dark:bg-blue-500/5 blur-[120px] rounded-full" />
-        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-purple-500/10 dark:bg-purple-500/5 blur-[120px] rounded-full" />
+        <div className="absolute top-[-10%] left-[-10%] w-[50%] h-[50%] bg-[hsl(217,91%,60%,0.08)] dark:bg-[hsl(217,91%,60%,0.05)] blur-[120px] rounded-full animate-pulse" />
+        <div className="absolute bottom-[-10%] right-[-10%] w-[50%] h-[50%] bg-[hsl(270,91%,60%,0.08)] dark:bg-[hsl(270,91%,60%,0.05)] blur-[120px] rounded-full animate-pulse delay-700" />
       </div>
 
       <motion.header
@@ -113,15 +95,6 @@ export default function Dashboard() {
               className="space-y-6"
             >
               <div className="flex flex-wrap gap-2">
-                {isOptimisticGenerating && !isActionPending && (
-                  <Badge
-                    variant="outline"
-                    className="inline-flex items-center gap-1 px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-amber-500/40 text-amber-700 dark:text-amber-400 animate-pulse"
-                  >
-                    <Zap className="w-3 h-3 shrink-0" aria-hidden />
-                    Queued…
-                  </Badge>
-                )}
                 <Badge
                   variant="secondary"
                   className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest bg-blue-500/10 text-blue-600 dark:text-blue-400 border-none"
@@ -132,7 +105,7 @@ export default function Dashboard() {
                   variant="outline"
                   className="px-3 py-1 text-[10px] font-bold uppercase tracking-widest border-purple-500/30 text-purple-600 dark:text-purple-400"
                 >
-                  Next.js 16 + Tailwind 4
+                  Next.js 15 + Tailwind 4
                 </Badge>
               </div>
               <h2 className="text-4xl md:text-6xl font-black tracking-tight leading-[1.1] text-balance">
@@ -147,8 +120,7 @@ export default function Dashboard() {
               </h2>
               <p className="text-lg md:text-xl text-muted-foreground leading-relaxed max-w-xl">
                 Upload a clear photo of your sketch — the model maps layout and labels to code.
-                Output is always responsive (mobile-first). Live preview shows the running
-                component; pixel-perfect match depends on sketch clarity.
+                Output is always responsive and follows premium UI patterns.
               </p>
             </motion.div>
 
@@ -163,7 +135,6 @@ export default function Dashboard() {
                     <Layout className="w-5 h-5 text-blue-500" />
                     Studio Configuration
                   </CardTitle>
-                  <CardDescription>Customize your output package ecosystem</CardDescription>
                 </CardHeader>
                 <CardContent className="space-y-8">
                   <UploadSection onUpload={setImage} />
@@ -172,38 +143,28 @@ export default function Dashboard() {
 
                   <PackageSelector selectedPackages={packages} onChange={setPackages} />
 
-                  <div className="w-full space-y-4">
-                    <input type="hidden" name="image" value={image || ""} />
-                    <input type="hidden" name="packages" value={JSON.stringify(packages)} />
+                  <Button
+                    type="button"
+                    onClick={handleGenerate}
+                    disabled={!image || isBusy}
+                    size="lg"
+                    aria-busy={isBusy}
+                    className={cn(
+                      "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
+                      image &&
+                      !isBusy &&
+                      "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]",
+                    )}
+                  >
+                    {isBusy ? (
+                      <Sparkles className="w-6 h-6 animate-spin" />
+                    ) : (
+                      <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
+                    )}
+                    {isBusy ? "Generating…" : "Generate UI code"}
 
-                    <Button
-                      type="button"
-                      onClick={handleGenerate}
-                      disabled={!image || isBusy}
-                      size="lg"
-                      aria-busy={isBusy}
-                      className={cn(
-                        "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
-                        image &&
-                        !isBusy &&
-                        "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]",
-                      )}
-                    >
-                      {isBusy ? (
-                        <Sparkles className="w-6 h-6 animate-spin" />
-                      ) : (
-                        <Wand2 className="w-6 h-6 group-hover:rotate-12 transition-transform" />
-                      )}
-                      {isBusy
-                        ? isOptimisticGenerating && !isActionPending
-                          ? "Starting…"
-                          : "Generating…"
-                        : "Generate UI code"}
-
-                      {/* Subtle shine effect */}
-                      <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
-                    </Button>
-                  </div>
+                    <div className="absolute inset-0 bg-linear-to-r from-transparent via-white/10 to-transparent -translate-x-full group-hover:translate-x-full transition-transform duration-1000" />
+                  </Button>
 
                   <InlineError message={error} />
                 </CardContent>
@@ -226,21 +187,10 @@ export default function Dashboard() {
       </main>
 
       <footer className="max-w-7xl mx-auto mt-24 pb-12 pt-8 border-t border-border/20">
-        <div className="flex flex-col md:flex-row justify-between items-center gap-8">
-          <div className="flex items-center gap-2 grayscale hover:grayscale-0 transition-all opacity-50 hover:opacity-100">
+        <div className="flex flex-col md:flex-row justify-between items-center gap-8 opacity-60 hover:opacity-100 transition-opacity">
+          <div className="flex items-center gap-2">
             <Brush className="w-5 h-5" />
             <span className="font-bold tracking-tighter">VisionSketch AI</span>
-          </div>
-          <div className="flex gap-4">
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
-              Safe Actions API
-            </Badge>
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
-              Magic Hour ML
-            </Badge>
-            <Badge variant="outline" className="text-[10px] opacity-60 rounded-full py-0">
-              Edge Caching
-            </Badge>
           </div>
           <p className="text-xs text-muted-foreground font-medium">
             © 2026 VisionSketch. All rights reserved.
