@@ -4,7 +4,7 @@ import { motion } from "framer-motion";
 import { Brush, Layout, Sparkles, Wand2, Zap } from "lucide-react";
 import { useAction } from "next-safe-action/hooks";
 import { lazy, Suspense, useEffect, useOptimistic, useRef, useState, useTransition } from "react";
-import { generateCode } from "@/app/actions";
+import { generateCode } from "@/app/api/generate/actions";
 import { Badge } from "@/components/ui/badge";
 import { Button } from "@/components/ui/button";
 import { Card, CardContent, CardDescription, CardHeader, CardTitle } from "@/components/ui/card";
@@ -185,8 +185,8 @@ export default function Dashboard() {
                       className={cn(
                         "w-full h-16 rounded-2xl flex items-center justify-center gap-3 font-bold text-xl transition-all duration-500 relative overflow-hidden group",
                         image &&
-                          !isBusy &&
-                          "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]",
+                        !isBusy &&
+                        "bg-linear-to-r from-blue-600 to-purple-600 hover:shadow-xl hover:shadow-blue-500/20 hover:scale-[1.01] active:scale-[0.99]",
                       )}
                     >
                       {isBusy ? (
